@@ -5,4 +5,4 @@
 - Settings are persisted between application restarts and device changes.
 - Detects changes in devices.
 
-![](https://raw.githubusercontent.com/olavim/windows-volume-limiter/master/screenshot/2026-01-05.png)
+![](https://raw.githubusercontent.com/olavim/windows-volume-limiter/master/screenshot/2026-01-06.png)

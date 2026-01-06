@@ -1,9 +1,59 @@
+* {
+  box-sizing: border-box;
+}
+
 html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  font-family: Arial, sans-serif;
+  font-family: system-ui, 'Segoe UI', Roboto, Oxygen, 'Open Sans', 'Helvetica Neue', sans-serif;
   font-size: 16px;
+  background-color: #f1f1f1;
+}
+
+.rc-slider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 14px;
+}
+
+.rc-slider-rail {
+  position: absolute;
+  width: 100%;
+  height: 4px;
+  border-radius: 0.2rem;
+  background-color: #aaa;
+}
+
+.rc-slider-track {
+  position: absolute;
+  background-color: dodgerblue;
+  height: 4px;
+  border-radius: 0.2rem;
+}
+
+.rc-slider-handle {
+  position: absolute;
+  z-index: 1;
+  width: 14px;
+  height: 14px;
+  background-color: rgb(30, 142, 253);
+  border: solid 2px #fff;
+  border-radius: 50%;
+  user-select: none;
+  touch-action: pan-x;
+  transition: box-shadow 0.1s ease;
+  cursor: pointer;
+}
+
+.rc-slider-handle:not(.rc-slider-handle-dragging):hover {
+  box-shadow: 0 0 0 5px rgba(30, 142, 253, 0.2);
+}
+
+.rc-slider-handle-dragging {
+  box-shadow: 0 0 0 7px rgba(30, 142, 253, 0.4);
 }
 
 .divider {
@@ -20,7 +70,6 @@ html, body {
   height: 100%;
   align-items: flex-start;
   justify-content: center;
-  box-sizing: border-box;
   padding: 1rem;
 }
 
@@ -31,13 +80,17 @@ html, body {
   justify-content: flex-start;
   flex: 1;
   width: 100%;
-  margin: 0.5rem 0;
+  margin: 0.15rem 0;
+  background-color: #fafafa;
+  padding: 1rem 1rem;
+  border-radius: 0.3rem;
+  border: 1px solid #dbdbdb;
 }
 
 .device-name {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #555;
+  font-size: 14px;
+  font-weight: 400;
+  color: #111;
   margin: 0 0 0.5rem 0;
 }
 
@@ -55,7 +108,13 @@ html, body {
 }
 
 .device-volume-label {
-  text-align: center;
-  flex: 0 0 50px;
-  color: #222;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 0 0 1.5rem;
+  margin-left: 1rem;
+  border-radius: 1rem;
+  color: #555;
+  font-size: 14px;
+  font-weight: 500;
 }

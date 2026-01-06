@@ -18,15 +18,28 @@ pub fn init_device_data(app_handle: &AppHandle) -> tauri::Result<()> {
   Ok(())
 }
 
-pub fn write_device_data(app_handle: &AppHandle, data: AudioDeviceConfig) -> tauri::Result<()> {
-  let devices_path = app_handle.path().resolve(DEVICE_DATA_FILE, BaseDirectory::AppData)?;
-  let json_str = serde_json::to_string_pretty(&data)?;
-  std::fs::write(&devices_path, json_str)?;
+pub fn write_device_data(app_handle: &AppHandle, data: AudioDeviceConfig) -> Result<(), String> {
+  let devices_path = app_handle
+    .path()
+    .resolve(DEVICE_DATA_FILE, BaseDirectory::AppData)
+    .map_err(|err| format!("{}", err))?;
+
+  let json_str = serde_json::to_string_pretty(&data)
+    .map_err(|err| format!("{}", err))?;
+
+  std::fs::write(&devices_path, json_str)
+    .map_err(|err| format!("{}", err))?;
+
   Ok(())
 }
 
-pub fn read_device_data(app_handle: &AppHandle) -> tauri::Result<AudioDeviceConfig> {
-  let devices_path = app_handle.path().resolve(DEVICE_DATA_FILE, BaseDirectory::AppData)?;
-  let json_str = std::fs::read_to_string(&devices_path)?;
-  Ok(serde_json::from_str(&json_str)?)
+pub fn read_device_data(app_handle: &AppHandle) -> Result<AudioDeviceConfig, String> {
+  let devices_path = app_handle.path().resolve(DEVICE_DATA_FILE, BaseDirectory::AppData)
+    .map_err(|err| format!("{}", err))?;
+
+  let json_str = std::fs::read_to_string(&devices_path)
+    .map_err(|err| format!("{}", err))?;
+  
+  serde_json::from_str(&json_str)
+    .map_err(|err| format!("{}", err))
 }
