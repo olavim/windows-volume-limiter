@@ -30,7 +30,7 @@ fn set_global_max_volume(app_handle: tauri::AppHandle, volume: f32) -> Result<()
 
 #[tauri::command]
 fn get_devices(state: State<'_, Mutex<AppState>>) -> Vec<AudioDeviceInfo> {
-  (&state).lock().unwrap().audio_controller.get_device_info()
+  (&state).lock().unwrap().audio_controller.get_devices()
 }
 
 #[tauri::command]
@@ -56,8 +56,8 @@ async fn periodic_update_devices(interval_ms: u64, app_handle: tauri::AppHandle)
     let controller = &mut state.lock().unwrap().audio_controller;
 
     match controller.update_devices() {
-      Err(err) => eprintln!("Couldn't update audio devices: {err}"),
-      Ok(true) => app_handle.emit("devices-updated", &controller.get_device_info()).unwrap(),
+      Err(err) => app_handle.emit("error", format!("Couldn't update audio devices: {err}")).unwrap(),
+      Ok(true) => app_handle.emit("devices-updated", &controller.get_devices()).unwrap(),
       Ok(false) => {}
     }
   }).await;
@@ -67,10 +67,11 @@ async fn periodic_apply_volume_limits(interval_ms: u64, app_handle: tauri::AppHa
   run_periodic(interval_ms, move || {
     let state = app_handle.state::<Mutex<AppState>>();
     let controller = &mut state.lock().unwrap().audio_controller;
-    
-    match controller.apply_volume_limits() {
-      Err(err) => eprintln!("Couldn't apply volume limits: {err}"),
-      Ok(()) => {}
+    for device in controller.get_devices() {
+      match controller.apply_max_volume(&device.id) {
+        Err(err) => app_handle.emit("error", format!("Couldn't apply volume limit to device '{}': {err}", device.name)).unwrap(),
+        Ok(()) => {}
+      }
     }
   }).await;
 }

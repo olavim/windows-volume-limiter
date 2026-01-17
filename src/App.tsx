@@ -64,6 +64,7 @@ export default function App() {
     fetchDevices().then(setDevices);
     fetchGlobalMaxVolume().then(setGlobalMaxVolume);
     listen<DeviceInfo[]>('devices-updated', event => setDevices(event.payload));
+    listen<string>('error', event => console.error(event.payload));
   }, []);
 
   return (
