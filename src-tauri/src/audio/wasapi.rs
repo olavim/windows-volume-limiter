@@ -2,7 +2,8 @@ use windows::Win32::Devices::FunctionDiscovery::{PKEY_DeviceInterface_FriendlyNa
 use windows::Win32::Foundation::PROPERTYKEY;
 use windows::Win32::Media::Audio::Endpoints::IAudioEndpointVolume;
 use windows::Win32::Media::Audio::{DEVICE_STATE_ACTIVE, IMMDevice, IMMDeviceCollection, IMMDeviceEnumerator, MMDeviceEnumerator, eRender};
-use windows::Win32::System::Com::{CLSCTX_ALL, CLSCTX_INPROC_SERVER, CoCreateInstance, STGM_READ};
+use windows::Win32::System::Com::StructuredStorage::{PROPVARIANT, PropVariantClear, PropVariantToStringAlloc};
+use windows::Win32::System::Com::{CLSCTX_ALL, CLSCTX_INPROC_SERVER, CoCreateInstance, CoTaskMemFree, STGM_READ};
 
 use crate::audio::{AudioDevice, AudioDeviceEnumerator};
 
@@ -24,31 +25,39 @@ impl WasapiAudioDevice {
     })
   }
 
-  unsafe fn get_property(&self, pkey: &PROPERTYKEY) -> Result<String, String> {
-    let value = self.mm_device
+  unsafe fn get_property(&self, pkey: &PROPERTYKEY) -> Result<PROPVARIANT, String> {
+    let store = self.mm_device
       .OpenPropertyStore(STGM_READ)
-      .map_err(|err| format!("Couldn't open device property store: {err}"))?
+      .map_err(|err| format!("Couldn't open device property store: {err}"))?;
+    let prop = store
       .GetValue(pkey)
       .map_err(|err| format!("Couldn't get property value: {err}"))?;
+    Ok(prop)
+  }
 
-    Ok(value.to_string())
+  unsafe fn get_string_property(&self, pkey: &PROPERTYKEY) -> Result<String, String> {
+    let mut prop = self.get_property(pkey)?;
+    let propstr_id = PropVariantToStringAlloc(&prop)
+      .map_err(|err| format!("Couldn't alloc memory for PropVariant to string conversion: {err}"))?;
+    let propstr = prop.to_string();
+
+    CoTaskMemFree(Some(propstr_id.0 as _));
+    PropVariantClear(&mut prop).map_err(|err| format!("Couldn't clear PropVariant: {err}"))?;
+
+    Ok(propstr)
   }
 }
 
 impl AudioDevice for WasapiAudioDevice {
   fn get_id(&self) -> Result<String, String> {
-    let id = unsafe {
-      self.mm_device
-        .GetId()
-        .map_err(|err| format!("Couldn't get device ID: {err}"))?
-        .to_string()
-        .map_err(|err| format!("Couldn't get device ID: {err}"))?
-    };
+    let pwstr = unsafe { self.mm_device.GetId().map_err(|err| format!("Couldn't get device ID: {err}"))? };
+    let id = unsafe { pwstr.to_string().map_err(|err| format!("Couldn't get device ID: {err}"))? };
+    unsafe { CoTaskMemFree(Some(pwstr.0 as _)) };
     Ok(id)
   }
 
   fn get_name(&self) -> Result<String, String> {
-    unsafe { self.get_property(&PKEY_DeviceInterface_FriendlyName) }
+    unsafe { self.get_string_property(&PKEY_DeviceInterface_FriendlyName) }
   }
 
   fn get_volume(&self) -> Result<f32, String> {
